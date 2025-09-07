@@ -1,0 +1,35 @@
+<section>
+  @for (user of users; track user.email) {
+    <form (submit)="login(user); $event.preventDefault()">
+      <div>
+        <p>Login with user having <strong>{{ user.values.length }}</strong> values</p>
+      </div>
+      <button type="submit" [disabled]="loading">Login</button>
+    </form>
+  }
+
+  @if (loginResults?.length) {
+    <h4>Login Results:</h4>
+    <ul>
+      @for (result of loginResults; track result.backend) {
+        <li>
+          {{ result.backend }}:
+          @if (result.token) {
+            <span>Success ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+          } @else {
+            <span>Failed ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+    @if (currentUserValues?.length) {
+    <h4>User Values:</h4>
+    <ul>
+      @for (value of currentUserValues; track value) {
+        <li>{{ value }}</li>
+      }
+    </ul>
+  }
+</section>

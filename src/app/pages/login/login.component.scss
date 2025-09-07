@@ -1,0 +1,38 @@
+section{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    min-width: 100vw;
+    gap: 10px;
+    >form{
+        width: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        border: black 1px solid;
+        border-radius: 10px;
+        padding: 20px;
+        >div {
+            >p {
+                text-align: center;
+            }
+        }
+    }
+}
+button {
+  padding: 0.7em 2em;
+  font-size: 1rem;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+button:hover {
+  background: #1565c0;
+}
