@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { Router} from '@angular/router';
 import { JwtAuthService } from '../../services/jwt.auth.service';
 import { DecimalPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 
 interface TestUser {
   email: string,
-  password: string,
-  values: string[]
+  password: string
 }
 
 interface LoginResult {
@@ -25,11 +25,11 @@ interface LoginResult {
 export class LoginComponent {
  
   users = [
-    { email: 'user10@test.com', password: 'test', values: this.generateValues(10) },
-    { email: 'user10@test.com', password: 'test', values: this.generateValues(25) },
-    { email: 'user10@test.com', password: 'test', values: this.generateValues(50) },
-    { email: 'user10@test.com', password: 'test', values: this.generateValues(100) },
-    { email: 'user10@test.com', password: 'test', values: this.generateValues(200) },
+  { email: 'user10@test.com', password: 'test', values: 10 },
+  { email: 'user25@test.com', password: 'test', values: 25 },
+  { email: 'user50@test.com', password: 'test', values: 50 },
+  { email: 'user100@test.com', password: 'test', values: 100 },
+  { email: 'user200@test.com', password: 'test', values: 200 },
   ];
 
   loginResults: LoginResult[] | null = null;
@@ -38,28 +38,32 @@ export class LoginComponent {
 
   constructor(
     private jwtAuthService: JwtAuthService,
-    private router: Router
+    private http: HttpClient
   )
   {}
 
-  generateValues(amount: number): string[] {
-    return Array.from({ length: amount }, (_, i) => `value${i + 1}`)
+async login(user: TestUser) {
+  this.loading = true;
+  this.loginResults = null;
+  const results = await this.jwtAuthService.login(user.email, user.password);
+  this.loginResults = results;
+  try {
+    const values = await lastValueFrom(
+      this.http.get<string[]>('BACKEND_URL/user-values', {
+        params: { email: user.email }
+      })
+    );
+    this.currentUserValues = values ?? [];
+    localStorage.setItem('user_values', JSON.stringify(this.currentUserValues));
+  } catch {
+    this.currentUserValues = [];
   }
-
-  async login(user: TestUser) {
-    this.loading = true;
-    this.loginResults = null;
-    const results = await this.jwtAuthService.login(user.email, user.password);
-    this.loginResults = results;
-    localStorage.setItem('user_values', JSON.stringify(user.values));
-    this.currentUserValues = user.values;
-    // Store all tokens with backend-specific keys
-    results.forEach(result => {
-      if (result.token) {
-        localStorage.setItem(result.backend + 'Token', result.token);
-      }
-    });
-    this.loading = false;
-  }
+  results.forEach(result => {
+    if (result.token) {
+      localStorage.setItem(result.backend + 'Token', result.token);
+    }
+  });
+  this.loading = false;
+}
 
 }

@@ -2,7 +2,7 @@
   @for (user of users; track user.email) {
     <form (submit)="login(user); $event.preventDefault()">
       <div>
-        <p>Login with user having <strong>{{ user.values.length }}</strong> values</p>
+        <p>Login with user having <strong>{{ user.values }}</strong> values</p>
       </div>
       <button type="submit" [disabled]="loading">Login</button>
     </form>
@@ -17,14 +17,18 @@
           @if (result.token) {
             <span>Success ({{ result.timeMs | number:'1.0-0' }} ms)</span>
           } @else {
-            <span>Failed ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+            @if (result.error) {
+              <span>Offline / No response ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+            } @else {
+              <span>Failed ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+            }
           }
         </li>
       }
     </ul>
   }
 
-    @if (currentUserValues?.length) {
+  @if (currentUserValues?.length) {
     <h4>User Values:</h4>
     <ul>
       @for (value of currentUserValues; track value) {
