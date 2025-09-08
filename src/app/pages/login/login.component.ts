@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { JwtAuthService } from '../../services/jwt.auth.service';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
+import { HttpHeaders } from '@angular/common/http';
 
 interface TestUser {
   email: string,
@@ -18,7 +19,7 @@ interface LoginResult {
 
 @Component({
   selector: 'app-login',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, KeyValuePipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
@@ -35,6 +36,8 @@ export class LoginComponent {
   loginResults: LoginResult[] | null = null;
   loading = false;
   currentUserValues: string[] | null = null;
+  currentUser: Record<string, any> | null = null;
+  currentUsers: Record<string, any>[] = [];
 
   constructor(
     private jwtAuthService: JwtAuthService,
@@ -42,25 +45,33 @@ export class LoginComponent {
   )
   {}
 
+async fetchUserData(user: TestUser, backend: string): Promise<void> {
+  try {
+    const GoToken = localStorage.getItem('GoToken');
+    const headers = GoToken
+      ? new HttpHeaders({ Authorization: `${GoToken}` })
+      : undefined;
+    const userData = await lastValueFrom(
+      this.http.get<Record<string, any>>('http://localhost:8081/api/userinfo', {
+        headers
+      })
+    );
+    this.currentUsers.push(userData);
+    localStorage.setItem('user_info', JSON.stringify(this.currentUsers));
+  } catch {
+    console.error("Could not GET user data")
+  }
+}
+
 async login(user: TestUser) {
   this.loading = true;
   this.loginResults = null;
   const results = await this.jwtAuthService.login(user.email, user.password);
   this.loginResults = results;
-  try {
-    const values = await lastValueFrom(
-      this.http.get<string[]>('BACKEND_URL/user-values', {
-        params: { email: user.email }
-      })
-    );
-    this.currentUserValues = values ?? [];
-    localStorage.setItem('user_values', JSON.stringify(this.currentUserValues));
-  } catch {
-    this.currentUserValues = [];
-  }
-  results.forEach(result => {
+  results.forEach(async result => {
     if (result.token) {
       localStorage.setItem(result.backend + 'Token', result.token);
+      await this.fetchUserData(user, result.backend); // Fetch user data for each backend
     }
   });
   this.loading = false;

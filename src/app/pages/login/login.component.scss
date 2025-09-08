@@ -1,11 +1,21 @@
+header{
+  // display: flex;
+  text-align: center;
+}
 section{
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
     min-height: 100vh;
     min-width: 100vw;
     gap: 10px;
-    >form{
+}
+.forms{
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+      >form{
         width: 200px;
         display: flex;
         justify-content: center;

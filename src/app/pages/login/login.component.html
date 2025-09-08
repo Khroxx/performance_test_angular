@@ -1,39 +1,49 @@
+<header>
+  <h1>This test is using meta users to login with JWT Tokens</h1>
+  <p>You can view the JWT tokens in local storage. There is no valueable data being used.</p>
+</header>
 <section>
-  @for (user of users; track user.email) {
-    <form (submit)="login(user); $event.preventDefault()">
-      <div>
-        <p>Login with user having <strong>{{ user.values }}</strong> values</p>
-      </div>
-      <button type="submit" [disabled]="loading">Login</button>
-    </form>
-  }
+  <div class="forms">
+    @for (user of users; track user.email) {
+      <form (submit)="login(user); $event.preventDefault()">
+        <div>
+          <p>Login with user having <strong>{{ user.values }}</strong> values</p>
+        </div>
+        <button type="submit" [disabled]="loading">Login</button>
+      </form>
+    }
+  </div>
 
-  @if (loginResults?.length) {
-    <h4>Login Results:</h4>
-    <ul>
-      @for (result of loginResults; track result.backend) {
-        <li>
-          {{ result.backend }}:
-          @if (result.token) {
-            <span>Success ({{ result.timeMs | number:'1.0-0' }} ms)</span>
-          } @else {
-            @if (result.error) {
-              <span>Offline / No response ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+  <div class="results">
+    @if (loginResults?.length) {
+      <h4>Login Results:</h4>
+      <ul>
+        @for (result of loginResults; track result.backend) {
+          <li>
+            {{ result.backend }}:
+            @if (result.token) {
+              <span>Success ({{ result.timeMs | number:'1.0-0' }} ms)</span>
             } @else {
-              <span>Failed ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+              @if (result.error) {
+                <span>Offline / No response ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+              } @else {
+                <span>Failed ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+              }
             }
-          }
-        </li>
-      }
-    </ul>
-  }
+          </li>
+        }
+      </ul>
+    }
+  </div>
 
-  @if (currentUserValues?.length) {
-    <h4>User Values:</h4>
-    <ul>
-      @for (value of currentUserValues; track value) {
-        <li>{{ value }}</li>
-      }
-    </ul>
-  }
+  <div class="values">
+    @for (user of currentUsers; track user['email']) {
+      <ul>
+        @for (item of (user | keyvalue); track item.key) {
+          <li><strong>{{ item.key }}:</strong> {{ item.value }}</li>
+        }
+      </ul>
+    }
+  </div>
+
 </section>
