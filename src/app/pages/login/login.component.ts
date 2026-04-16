@@ -1,80 +1,78 @@
 import { Component } from '@angular/core';
-import { JwtAuthService } from '../../services/jwt.auth.service';
-import { DecimalPipe, KeyValuePipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
-import { HttpHeaders } from '@angular/common/http';
-
-interface TestUser {
-  email: string,
-  password: string
-}
-
-interface LoginResult {
-  backend: string;
-  token: string | null;
-  timeMs: number;
-  error?: any;
-}
+import { DecimalPipe } from '@angular/common';
+import {
+  BackendConfig,
+  BenchmarkBatchResult,
+  JwtAuthService,
+  TestUser
+} from '../../services/jwt.auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [DecimalPipe, KeyValuePipe],
+  imports: [DecimalPipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
- 
-  users = [
-  { email: 'user10@test.com', password: 'test', values: 10 },
-  { email: 'user25@test.com', password: 'test', values: 25 },
-  { email: 'user50@test.com', password: 'test', values: 50 },
-  { email: 'user100@test.com', password: 'test', values: 100 },
-  { email: 'user200@test.com', password: 'test', values: 200 },
+  readonly backends: BackendConfig[];
+  readonly batchSizes: number[] = [1, 100, 1000, 10000];
+
+  // Existing backend datasets currently have these seed users.
+  private readonly seedUsers: TestUser[] = [
+    { email: 'user10@test.com', password: 'test' },
+    { email: 'user25@test.com', password: 'test' },
+    { email: 'user50@test.com', password: 'test' },
+    { email: 'user100@test.com', password: 'test' },
+    { email: 'user200@test.com', password: 'test' }
   ];
 
-  loginResults: LoginResult[] | null = null;
-  loading = false;
-  currentUserValues: string[] | null = null;
-  currentUser: Record<string, any> | null = null;
-  currentUsers: Record<string, any>[] = [];
+  private readonly runningState = new Map<string, boolean>();
+  private readonly results = new Map<string, BenchmarkBatchResult>();
 
   constructor(
-    private jwtAuthService: JwtAuthService,
-    private http: HttpClient
-  )
-  {}
-
-async fetchUserData(user: TestUser, backend: string): Promise<void> {
-  try {
-    const GoToken = localStorage.getItem('GoToken');
-    const headers = GoToken
-      ? new HttpHeaders({ Authorization: `${GoToken}` })
-      : undefined;
-    const userData = await lastValueFrom(
-      this.http.get<Record<string, any>>('http://localhost:8081/api/userinfo', {
-        headers
-      })
-    );
-    this.currentUsers.push(userData);
-    localStorage.setItem('user_info', JSON.stringify(this.currentUsers));
-  } catch {
-    console.error("Could not GET user data")
+    private readonly jwtAuthService: JwtAuthService
+  ) {
+    this.backends = this.jwtAuthService.getBackends();
   }
-}
 
-async login(user: TestUser) {
-  this.loading = true;
-  this.loginResults = null;
-  const results = await this.jwtAuthService.login(user.email, user.password);
-  this.loginResults = results;
-  results.forEach(async result => {
-    if (result.token) {
-      localStorage.setItem(result.backend + 'Token', result.token);
-      await this.fetchUserData(user, result.backend); // Fetch user data for each backend
+  async runBenchmark(backendId: string, userCount: number): Promise<void> {
+    const key = this.getKey(backendId, userCount);
+    this.runningState.set(key, true);
+
+    try {
+      const users = this.buildRandomUsers(userCount);
+      const result = await this.jwtAuthService.benchmarkBackend(backendId, users);
+      this.results.set(key, result);
+    } finally {
+      this.runningState.set(key, false);
     }
-  });
-  this.loading = false;
-}
+  }
+
+  isRunning(backendId: string, userCount: number): boolean {
+    return this.runningState.get(this.getKey(backendId, userCount)) ?? false;
+  }
+
+  isBackendRunning(backendId: string): boolean {
+    return this.batchSizes.some((size) => this.isRunning(backendId, size));
+  }
+
+  getResult(backendId: string, userCount: number): BenchmarkBatchResult | null {
+    return this.results.get(this.getKey(backendId, userCount)) ?? null;
+  }
+
+  buildRandomUsers(userCount: number): TestUser[] {
+    const generated: TestUser[] = [];
+
+    for (let i = 0; i < userCount; i += 1) {
+      const randomIndex = Math.floor(Math.random() * this.seedUsers.length);
+      generated.push(this.seedUsers[randomIndex]);
+    }
+
+    return generated;
+  }
+
+  private getKey(backendId: string, userCount: number): string {
+    return `${backendId}-${userCount}`;
+  }
 
 }

@@ -1,49 +1,40 @@
-<header>
-  <h1>This test is using meta users to login with JWT Tokens</h1>
-  <p>You can view the JWT tokens in local storage. There is no valueable data being used.</p>
-</header>
-<section>
-  <div class="forms">
-    @for (user of users; track user.email) {
-      <form (submit)="login(user); $event.preventDefault()">
-        <div>
-          <p>Login with user having <strong>{{ user.values }}</strong> values</p>
-        </div>
-        <button type="submit" [disabled]="loading">Login</button>
-      </form>
-    }
-  </div>
+<main class="benchmark-page">
+  <header class="hero">
+    <h1>JWT Login Performance Benchmark</h1>
+    <p>
+      Click batch button to run concurrent logins against one backend.
+      Time includes login plus authenticated user-info request for all users in batch.
+    </p>
+  </header>
 
-  <div class="results">
-    @if (loginResults?.length) {
-      <h4>Login Results:</h4>
-      <ul>
-        @for (result of loginResults; track result.backend) {
-          <li>
-            {{ result.backend }}:
-            @if (result.token) {
-              <span>Success ({{ result.timeMs | number:'1.0-0' }} ms)</span>
+  <section class="cards">
+    @for (backend of backends; track backend.id) {
+      <article class="backend-card">
+        <h2>{{ backend.name }}</h2>
+
+        <div class="actions">
+          @for (size of batchSizes; track size) {
+            <button
+              type="button"
+              [disabled]="isBackendRunning(backend.id)"
+              (click)="runBenchmark(backend.id, size)">
+              Run {{ size }} Users
+            </button>
+
+            @if (isRunning(backend.id, size)) {
+              <p class="state running">Running {{ size }} users...</p>
+            } @else if (getResult(backend.id, size); as result) {
+              <p class="state" [class.success]="result.status === 'success'" [class.failed]="result.status === 'failed'">
+                {{ size }} users: {{ result.status }}
+                ({{ result.totalTimeMs | number:'1.0-0' }} ms,
+                ok {{ result.successCount }}, fail {{ result.failureCount }})
+              </p>
             } @else {
-              @if (result.error) {
-                <span>Offline / No response ({{ result.timeMs | number:'1.0-0' }} ms)</span>
-              } @else {
-                <span>Failed ({{ result.timeMs | number:'1.0-0' }} ms)</span>
-              }
+              <p class="state idle">Idle for {{ size }} users</p>
             }
-          </li>
-        }
-      </ul>
+          }
+        </div>
+      </article>
     }
-  </div>
-
-  <div class="values">
-    @for (user of currentUsers; track user['email']) {
-      <ul>
-        @for (item of (user | keyvalue); track item.key) {
-          <li><strong>{{ item.key }}:</strong> {{ item.value }}</li>
-        }
-      </ul>
-    }
-  </div>
-
-</section>
+  </section>
+</main>

@@ -1,12 +1,30 @@
 import { HttpClient } from '@angular/common/http';
+import { HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 
-interface LoginResult {
-  backend: string;
-  token: string | null;
-  timeMs: number;
-  error?: any;
+export interface TestUser {
+  email: string;
+  password: string;
+}
+
+export interface BackendConfig {
+  id: string;
+  name: string;
+  loginUrl: string;
+  userInfoUrl: string;
+  tokenHeader: string;
+}
+
+export interface BenchmarkBatchResult {
+  backendId: string;
+  backendName: string;
+  userCount: number;
+  totalTimeMs: number;
+  successCount: number;
+  failureCount: number;
+  status: 'success' | 'partial' | 'failed';
+  errorMessage?: string;
 }
 
 @Injectable({
@@ -14,45 +32,96 @@ interface LoginResult {
 })
 export class JwtAuthService {
 
-  /**
-   * DO NOT CHANGE UNLESS YOU CHANGED IT IN THE BACKEND REPOSITORIES
-   * OR YOU WANT TO ADD ANOTHER BACKEND YOURSELF
-   */
-    private backends = [
-    { name: 'Django', url: 'http://localhost:8080/api/login' },
-    { name: 'Go', url: 'http://localhost:8081/api/login' },
-    { name: 'Spring', url: 'http://localhost:8082/api/login' }
+  private readonly backends: BackendConfig[] = [
+    {
+      id: 'go',
+      name: 'Go',
+      loginUrl: 'http://localhost:8081/api/login',
+      userInfoUrl: 'http://localhost:8081/api/userinfo',
+      tokenHeader: 'GoToken'
+    },
+    {
+      id: 'spring',
+      name: 'Spring Boot',
+      loginUrl: 'http://localhost:8082/api/login',
+      userInfoUrl: 'http://localhost:8082/api/userinfo',
+      tokenHeader: 'SpringToken'
+    },
+    {
+      id: 'django-ninja',
+      name: 'Django Ninja',
+      loginUrl: 'http://localhost:8080/api/login',
+      userInfoUrl: 'http://localhost:8080/api/userinfo',
+      tokenHeader: 'DjangoToken'
+    }
   ];
 
   constructor(
     private http: HttpClient
   ) { }
 
-  async login(email: string, password: string): Promise<LoginResult[]> {
-    const results: LoginResult[] = [];
-    await Promise.all(this.backends.map(async backend => {
-      const start = performance.now();
-      try {
-        const response = await lastValueFrom(
-          this.http.post<{ token: string }>(
-            backend.url,
-            { email, password }
-          )
-        );
-        results.push({
-          backend: backend.name,
-          token: response?.token ?? null,
-          timeMs: performance.now() - start
-        });
-      } catch (error) {
-        results.push({
-          backend: backend.name,
-          token: null,
-          timeMs: performance.now() - start,
-          error
-        });
+  getBackends(): BackendConfig[] {
+    return this.backends;
+  }
+
+  async benchmarkBackend(backendId: string, users: TestUser[]): Promise<BenchmarkBatchResult> {
+    const backend = this.backends.find((entry) => entry.id === backendId);
+    if (!backend) {
+      return {
+        backendId,
+        backendName: backendId,
+        userCount: users.length,
+        totalTimeMs: 0,
+        successCount: 0,
+        failureCount: users.length,
+        status: 'failed',
+        errorMessage: 'Backend config not found'
+      };
+    }
+
+    const start = performance.now();
+    const outcomes = await Promise.all(users.map((user) => this.runLoginFlow(backend, user)));
+    const totalTimeMs = performance.now() - start;
+
+    const successCount = outcomes.filter((ok) => ok).length;
+    const failureCount = users.length - successCount;
+
+    let status: 'success' | 'partial' | 'failed' = 'success';
+    if (successCount === 0) {
+      status = 'failed';
+    } else if (failureCount > 0) {
+      status = 'partial';
+    }
+
+    return {
+      backendId: backend.id,
+      backendName: backend.name,
+      userCount: users.length,
+      totalTimeMs,
+      successCount,
+      failureCount,
+      status
+    };
+  }
+
+  private async runLoginFlow(backend: BackendConfig, user: TestUser): Promise<boolean> {
+    try {
+      const loginResponse = await lastValueFrom(
+        this.http.post<{ token: string }>(backend.loginUrl, user)
+      );
+
+      if (!loginResponse?.token) {
+        return false;
       }
-    }));
-    return results;
+
+      const headers = new HttpHeaders({ [backend.tokenHeader]: loginResponse.token });
+      await lastValueFrom(
+        this.http.get<Record<string, unknown>>(backend.userInfoUrl, { headers })
+      );
+
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

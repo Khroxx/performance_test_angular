@@ -1,48 +1,94 @@
-header{
-  // display: flex;
-  text-align: center;
-}
-section{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    min-height: 100vh;
-    min-width: 100vw;
-    gap: 10px;
-}
-.forms{
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-      >form{
-        width: 200px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        border: black 1px solid;
-        border-radius: 10px;
-        padding: 20px;
-        >div {
-            >p {
-                text-align: center;
-            }
-        }
-    }
-}
-button {
-  padding: 0.7em 2em;
-  font-size: 1rem;
-  background: #1976d2;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+:host {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eef6f7 0%, #f8fafc 100%);
+  color: #11202b;
 }
 
-button:hover {
-  background: #1565c0;
+.benchmark-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+  }
+
+  p {
+    margin: 0;
+    color: #3d5161;
+  }
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.backend-card {
+  border: 1px solid #d7e0e8;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #ffffff;
+
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1.2rem;
+  }
+}
+
+.actions {
+  display: grid;
+  gap: 0.6rem;
+}
+
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  background: #0b6ea8;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.state {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #2c3f4e;
+}
+
+.state.idle {
+  color: #506473;
+}
+
+.state.running {
+  color: #8a5a00;
+}
+
+.state.success {
+  color: #117a4a;
+}
+
+.state.failed {
+  color: #a92b2b;
+}
+
+@media (max-width: 1024px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
 }
