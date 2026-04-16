@@ -28,6 +28,10 @@
                 {{ size }} users: {{ result.status }}
                 ({{ result.totalTimeMs | number:'1.0-0' }} ms,
                 ok {{ result.successCount }}, fail {{ result.failureCount }})
+                @if (getAverageTime(backend.id, size); as averageTime) {
+                  | avg last {{ getAverageSampleCount(backend.id, size) }}:
+                  {{ averageTime | number:'1.0-0' }} ms
+                }
               </p>
             } @else {
               <p class="state idle">Idle for {{ size }} users</p>

@@ -28,6 +28,7 @@ export class LoginComponent {
 
   private readonly runningState = new Map<string, boolean>();
   private readonly results = new Map<string, BenchmarkBatchResult>();
+  private readonly recentTimesMs = new Map<string, number[]>();
 
   constructor(
     private readonly jwtAuthService: JwtAuthService
@@ -43,6 +44,7 @@ export class LoginComponent {
       const users = this.buildRandomUsers(userCount);
       const result = await this.jwtAuthService.benchmarkBackend(backendId, users);
       this.results.set(key, result);
+      this.addTimeSample(key, result.totalTimeMs);
     } finally {
       this.runningState.set(key, false);
     }
@@ -60,6 +62,20 @@ export class LoginComponent {
     return this.results.get(this.getKey(backendId, userCount)) ?? null;
   }
 
+  getAverageTime(backendId: string, userCount: number): number | null {
+    const samples = this.recentTimesMs.get(this.getKey(backendId, userCount));
+    if (!samples || samples.length === 0) {
+      return null;
+    }
+
+    const total = samples.reduce((sum, value) => sum + value, 0);
+    return total / samples.length;
+  }
+
+  getAverageSampleCount(backendId: string, userCount: number): number {
+    return this.recentTimesMs.get(this.getKey(backendId, userCount))?.length ?? 0;
+  }
+
   buildRandomUsers(userCount: number): TestUser[] {
     const generated: TestUser[] = [];
 
@@ -73,6 +89,17 @@ export class LoginComponent {
 
   private getKey(backendId: string, userCount: number): string {
     return `${backendId}-${userCount}`;
+  }
+
+  private addTimeSample(key: string, timeMs: number): void {
+    const current = this.recentTimesMs.get(key) ?? [];
+    current.push(timeMs);
+
+    if (current.length > 10) {
+      current.shift();
+    }
+
+    this.recentTimesMs.set(key, current);
   }
 
 }

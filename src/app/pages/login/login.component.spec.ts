@@ -80,5 +80,27 @@ describe('LoginComponent', () => {
     expect(result).not.toBeNull();
     expect(result?.status).toBe('success');
     expect(component.isRunning('go', 1)).toBeFalse();
+    expect(component.getAverageTime('go', 1)).toBe(10);
+    expect(component.getAverageSampleCount('go', 1)).toBe(1);
+  });
+
+  it('should keep only last 10 timing samples for a button', async () => {
+    for (let i = 1; i <= 12; i += 1) {
+      serviceSpy.benchmarkBackend.and.resolveTo({
+        backendId: 'go',
+        backendName: 'Go',
+        userCount: 1,
+        totalTimeMs: i,
+        successCount: 1,
+        failureCount: 0,
+        status: 'success'
+      });
+
+      await component.runBenchmark('go', 1);
+    }
+
+    const average = component.getAverageTime('go', 1);
+    expect(component.getAverageSampleCount('go', 1)).toBe(10);
+    expect(average).toBe(7.5);
   });
 });
