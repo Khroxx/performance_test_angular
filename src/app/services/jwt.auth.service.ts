@@ -14,6 +14,7 @@ export interface BackendConfig {
   loginUrl: string;
   userInfoUrl: string;
   tokenHeader: string;
+  sendAuthorizationBearer?: boolean;
 }
 
 export interface BenchmarkBatchResult {
@@ -38,21 +39,24 @@ export class JwtAuthService {
       name: 'Go',
       loginUrl: 'http://localhost:8081/api/login',
       userInfoUrl: 'http://localhost:8081/api/userinfo',
-      tokenHeader: 'GoToken'
+      tokenHeader: 'GoToken',
+      sendAuthorizationBearer: true
     },
     {
       id: 'spring',
       name: 'Spring Boot',
       loginUrl: 'http://localhost:8082/api/login',
       userInfoUrl: 'http://localhost:8082/api/userinfo',
-      tokenHeader: 'SpringToken'
+      tokenHeader: 'SpringToken',
+      sendAuthorizationBearer: true
     },
     {
       id: 'django-ninja',
       name: 'Django Ninja',
       loginUrl: 'http://localhost:8080/api/login',
       userInfoUrl: 'http://localhost:8080/api/userinfo',
-      tokenHeader: 'DjangoToken'
+      tokenHeader: 'DjangoToken',
+      sendAuthorizationBearer: true
     }
   ];
 
@@ -114,7 +118,7 @@ export class JwtAuthService {
         return false;
       }
 
-      const headers = new HttpHeaders({ [backend.tokenHeader]: loginResponse.token });
+      const headers = this.buildAuthHeaders(backend, loginResponse.token);
       await lastValueFrom(
         this.http.get<Record<string, unknown>>(backend.userInfoUrl, { headers })
       );
@@ -123,5 +127,17 @@ export class JwtAuthService {
     } catch {
       return false;
     }
+  }
+
+  private buildAuthHeaders(backend: BackendConfig, token: string): HttpHeaders {
+    const rawHeaders: Record<string, string> = {
+      [backend.tokenHeader]: token
+    };
+
+    if (backend.sendAuthorizationBearer) {
+      rawHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    return new HttpHeaders(rawHeaders);
   }
 }

@@ -48,6 +48,7 @@ describe('JwtAuthService', () => {
     const userInfoReq = httpMock.expectOne('http://localhost:8081/api/userinfo');
     expect(userInfoReq.request.method).toBe('GET');
     expect(userInfoReq.request.headers.get('GoToken')).toBe('abc-token');
+    expect(userInfoReq.request.headers.get('Authorization')).toBe('Bearer abc-token');
     userInfoReq.flush({ email: 'user10@test.com' });
 
     const result = await promise;
