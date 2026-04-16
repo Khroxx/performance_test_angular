@@ -10,11 +10,11 @@ Angular 20 frontend for JWT login performance benchmark.
 
 ## Repository map and clone URLs
 
-- `performance_test_angular` (frontend): `git@github.com:Khroxx/performance_test_angular.git`
-- `performance_test_go` (Go backend): `git@github.com:Khroxx/performance_test_go.git`
-- `performance_test_django` (Django Ninja backend): `git@github.com:Khroxx/performance_test__django`
-- `performance_test_java` (Spring Boot backend): `git@github.com:Khroxx/performance_test__java`
-- `performance_test_db` (shared PostgreSQL 17): `git@github.com:Khroxx/performance_test__db`
+- `performance_test_angular` (frontend): `https://github.com/Khroxx/performance_test_angular.git`
+- `performance_test_go` (Go backend): `https://github.com/Khroxx/performance_test_go.git`
+- `performance_test_django` (Django Ninja backend): `https://github.com/Khroxx/performance_test_django.git`
+- `performance_test_java` (Spring Boot backend): `https://github.com/Khroxx/performance_test_java.git`
+- `performance_test_db` (shared PostgreSQL 17): `https://github.com/Khroxx/performance_test_db.git`
 
 ## Local run
 
